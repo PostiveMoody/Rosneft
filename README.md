@@ -6,5 +6,5 @@
 
   •	Бэкэнд - Asp.Net Core, Entity Framework Core, MS SQL
 
-# User Story - 1
+# User Story - 1: Пользователь может создать новое обращение в системе
 
