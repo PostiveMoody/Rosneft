@@ -11,6 +11,7 @@ builder.Services.AddDbContext<RosneftDbContext>(options =>
     options.UseSqlServer(conn));
 
 builder.Services.AddTransient<IConventionModelFactory, EdmModelFactory>();
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddControllersWithViews();
 

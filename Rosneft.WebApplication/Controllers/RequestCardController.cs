@@ -10,12 +10,14 @@ namespace Rosneft.WebApplication.Controllers
     [Route("requestcards")]
     public class RequestCardController : Controller
     {
-        private readonly RosneftDbContext _dbContext;
+        private readonly IUnitOfWork _uow;
         private readonly IConventionModelFactory _modelFactory;
 
-        public RequestCardController(RosneftDbContext dbContext, IConventionModelFactory modelFactory)
+        public RequestCardController(
+            IUnitOfWork uow,
+            IConventionModelFactory modelFactory)
         {
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _uow = uow ?? throw new ArgumentNullException(nameof(uow));
             _modelFactory = modelFactory ?? throw new ArgumentNullException(nameof(modelFactory));
         }
 
@@ -43,8 +45,8 @@ namespace Rosneft.WebApplication.Controllers
 
             var requestCard = RequestCard.Save(now, requestCardCreationOptions);
 
-            _dbContext.Add(requestCard);
-            _dbContext.SaveChanges();
+            _uow.RequestCardRepository.AddToContext(requestCard);
+            _uow.SaveChanges();
 
             return requestCard
                 .ToDto()
@@ -58,7 +60,7 @@ namespace Rosneft.WebApplication.Controllers
             , string skip
             , string orderby)
         {
-            var qData = _dbContext.RequestCards
+            var qData = _uow.RequestCardRepository.RequestCards()
                 .Where(requestCard => requestCard.IsDeleted == false)
                 .Select(requestCard => new RequestCardDto()
             {
@@ -104,7 +106,7 @@ namespace Rosneft.WebApplication.Controllers
         [Route("{requestCardId}")]
         public ApiResult<RequestCardDto> Get(int requestCardId)
         {
-            var requestCard = _dbContext.RequestCards
+            var requestCard = _uow.RequestCardRepository.RequestCards()
                 .FirstOrDefault(requestCard => requestCard.RequestCardId == requestCardId);
 
             if (requestCard == null || requestCard.IsDeleted)
@@ -123,7 +125,7 @@ namespace Rosneft.WebApplication.Controllers
         [Route("{requestCardId}")]
         public ApiResult<RequestCardDto> Delete(int requestCardId,int requestCardVersion)
         {
-            var requestCard = _dbContext.RequestCards
+            var requestCard = _uow.RequestCardRepository.RequestCards()
                 .FirstOrDefault(requestCard => requestCard.RequestCardId == requestCardId);
             
             if (requestCard == null || requestCard.IsDeleted)
@@ -135,7 +137,7 @@ namespace Rosneft.WebApplication.Controllers
 
             var now = DateTime.UtcNow;
             requestCard.Delete(now, requestCardVersion);
-            _dbContext.SaveChanges();
+            _uow.SaveChanges();
 
             return requestCard
                .ToDto()
@@ -147,7 +149,7 @@ namespace Rosneft.WebApplication.Controllers
         public ApiResult<RequestCardDto> Put(int requestCardId, 
             RequestCardUpdateOptionsDto options)
         {
-            var requestCard = _dbContext.RequestCards
+            var requestCard = _uow.RequestCardRepository.RequestCards()
                 .FirstOrDefault(requestCard => requestCard.RequestCardId == requestCardId);
 
             if (requestCard == null || requestCard.IsDeleted)
@@ -167,7 +169,7 @@ namespace Rosneft.WebApplication.Controllers
 
             var now = DateTime.UtcNow;
             requestCard.Update(now, requestCardUpdateOptions);
-            _dbContext.SaveChanges();
+            _uow.SaveChanges();
 
             return requestCard
                .ToDto()
