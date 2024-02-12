@@ -25,5 +25,11 @@ namespace Rosneft.DAL
         {
             this._context.SaveChanges();
         }
+        public Task SaveChangesAsync()
+        {
+            this._context.SaveChangesAsync();
+            return Task.CompletedTask;
+        }
+
     }
 }

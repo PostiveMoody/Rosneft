@@ -6,5 +6,6 @@ namespace Rosneft.DAL
     {
         IRequestCardRepository RequestCardRepository { get; }
         void SaveChanges();
+        Task SaveChangesAsync();
     }
 }

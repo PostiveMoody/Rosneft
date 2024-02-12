@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Rosneft.DAL;
 using Rosneft.Domain;
 using Rosneft.WebApplication.Dto;
+using Rosneft.WebApplication.Models;
 using Rosneft.WebApplication.Odata;
 
 namespace Rosneft.WebApplication.Controllers
@@ -28,6 +29,7 @@ namespace Rosneft.WebApplication.Controllers
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         [HttpPost]
+        [Route("save")]
         public ApiResult<RequestCardDto> Post([FromBody] RequestCardCreationOptionsDto creationOptions)
         {
             if (creationOptions == null)
@@ -35,15 +37,13 @@ namespace Rosneft.WebApplication.Controllers
 
             var now = DateTime.UtcNow;
             
-            var requestCardCreationOptions = new RequestCardCreationOptions(
-                creationOptions.Initiator,
-                creationOptions.SubjectOfAppeal,
-                creationOptions.Description,
-                creationOptions.DeadlineForHiring,
-                creationOptions.Category);
-
-
-            var requestCard = RequestCard.Save(now, requestCardCreationOptions);
+            var requestCard = RequestCard.Save(
+               now,
+               creationOptions.Initiator,
+               creationOptions.SubjectOfAppeal,
+               creationOptions.Description,
+               creationOptions.DeadlineForHiring,
+               creationOptions.Category);
 
             _uow.RequestCardRepository.AddToContext(requestCard);
             _uow.SaveChanges();
@@ -54,7 +54,7 @@ namespace Rosneft.WebApplication.Controllers
         }
 
         [HttpGet]
-        [Route("")]
+        [Route("list")]
         public ApiResult<PageDto<RequestCardDto>> Get(string filter
             , string top
             , string skip
@@ -174,6 +174,44 @@ namespace Rosneft.WebApplication.Controllers
             return requestCard
                .ToDto()
                .ToApiResult();
+        }
+
+        [HttpGet]
+        public IActionResult SaveRequestCard()
+        {
+            return View();
+        }
+        /// <summary>
+        /// Метод создан в целях показать как работает клиентская валидация в ASP.NET Core
+        /// </summary>
+        /// <param name="creationOptions"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        [HttpPost]
+        public async Task<IActionResult> SaveRequestCard([FromForm] RequestCardCreationOptionsViewModel creationOptions)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(creationOptions);
+            }
+
+            if (creationOptions == null)
+                throw new ArgumentNullException(nameof(creationOptions));
+
+            var now = DateTime.UtcNow;
+
+            var requestCard = RequestCard.Save(
+                now,
+                creationOptions.Initiator,
+                creationOptions.SubjectOfAppeal,
+                creationOptions.Description,
+                creationOptions.DeadlineForHiring,
+                creationOptions.Category);
+
+            _uow.RequestCardRepository.AddToContext(requestCard);
+            await _uow.SaveChangesAsync();
+
+            return View();
         }
     }
 }

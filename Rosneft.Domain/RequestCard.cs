@@ -21,49 +21,105 @@ namespace Rosneft.Domain
 
         public static RequestCard Save(
             DateTime now,
-            RequestCardCreationOptions requestCardCreationOptions)
+            string initator,
+            string subjectOfAppeal,
+            string description,
+            DateTime deadlineForHiring,
+            RequestCategory category)
         {
-            if (requestCardCreationOptions == null)
-                throw new DomainException(nameof(requestCardCreationOptions));
             if (now == default)
                 throw new DomainException("Invalid DateTime: " + nameof(now));
 
-            if (string.IsNullOrEmpty(requestCardCreationOptions.Initiator) &&
-                requestCardCreationOptions.Initiator.Length > 150 &&
-                requestCardCreationOptions.Initiator.Any(char.IsDigit))
+            if (string.IsNullOrEmpty(initator) &&
+                initator.Length > 150 &&
+                initator.Any(char.IsDigit))
             {
                 throw new DomainException("Invalid string: " +
-                   nameof(requestCardCreationOptions.Initiator) +
+                   nameof(initator) +
                    "The maximum number of characters to enter in the Initiator field is 150 characters.");
             }
-            if (string.IsNullOrEmpty(requestCardCreationOptions.SubjectOfAppeal) &&
-               requestCardCreationOptions.SubjectOfAppeal.Any(char.IsDigit))
+            if (string.IsNullOrEmpty(subjectOfAppeal) &&
+               subjectOfAppeal.Any(char.IsDigit))
             {
                 throw new DomainException("Invalid string: " +
-                    nameof(requestCardCreationOptions.SubjectOfAppeal));
+                    nameof(subjectOfAppeal));
             }
-            if (string.IsNullOrEmpty(requestCardCreationOptions.Description) &&
-                requestCardCreationOptions.Description.Length > 1000)
+            if (string.IsNullOrEmpty(description) &&
+                description.Length > 1000)
             {
                 throw new DomainException("Invalid string: " +
-                    nameof(requestCardCreationOptions.Description) +
+                    nameof(description) +
                     "The maximum number of characters to enter in the Description field is 1000 characters.");
             }
-            if (requestCardCreationOptions.DeadlineForHiring == default || 
-                requestCardCreationOptions.DeadlineForHiring < now)
+            if (deadlineForHiring == default ||
+                deadlineForHiring < now)
             {
                 throw new DomainException("Invalid DateTime: " +
-                    nameof(requestCardCreationOptions.DeadlineForHiring));
+                    nameof(deadlineForHiring));
             }
 
             return new RequestCard
             {
-                Initiator = requestCardCreationOptions.Initiator,
-                SubjectOfAppeal = requestCardCreationOptions.SubjectOfAppeal,
-                Description = requestCardCreationOptions.Description,
-                DeadlineForHiring = requestCardCreationOptions.DeadlineForHiring,
+                Initiator = initator,
+                SubjectOfAppeal = subjectOfAppeal,
+                Description = description,
+                DeadlineForHiring = deadlineForHiring,
                 Status = RequestProgressStatus.New.ToString(),
-                Category = requestCardCreationOptions.Category.ToString(),
+                Category = category.ToString(),
+                CreationDate = now,
+                UpdatedDate = now,
+                RequestCardVersion = 1,
+                IsDeleted = false,
+            };
+        }
+
+        public static RequestCard Save(
+           DateTime now,
+           string initator,
+           string subjectOfAppeal,
+           string description,
+           DateTime deadlineForHiring,
+           int category)
+        {
+            if (now == default)
+                throw new DomainException("Invalid DateTime: " + nameof(now));
+
+            if (string.IsNullOrEmpty(initator) &&
+                initator.Length > 150 &&
+                initator.Any(char.IsDigit))
+            {
+                throw new DomainException("Invalid string: " +
+                   nameof(initator) +
+                   "The maximum number of characters to enter in the Initiator field is 150 characters.");
+            }
+            if (string.IsNullOrEmpty(subjectOfAppeal) &&
+               subjectOfAppeal.Any(char.IsDigit))
+            {
+                throw new DomainException("Invalid string: " +
+                    nameof(subjectOfAppeal));
+            }
+            if (string.IsNullOrEmpty(description) &&
+                description.Length > 1000)
+            {
+                throw new DomainException("Invalid string: " +
+                    nameof(description) +
+                    "The maximum number of characters to enter in the Description field is 1000 characters.");
+            }
+            if (deadlineForHiring == default ||
+                deadlineForHiring < now)
+            {
+                throw new DomainException("Invalid DateTime: " +
+                    nameof(deadlineForHiring));
+            }
+
+            return new RequestCard
+            {
+                Initiator = initator,
+                SubjectOfAppeal = subjectOfAppeal,
+                Description = description,
+                DeadlineForHiring = deadlineForHiring,
+                Status = RequestProgressStatus.New.ToString(),
+                Category = category.ToString(),
                 CreationDate = now,
                 UpdatedDate = now,
                 RequestCardVersion = 1,

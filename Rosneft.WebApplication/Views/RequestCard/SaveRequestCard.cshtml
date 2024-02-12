@@ -1,0 +1,36 @@
+﻿@using Rosneft.Domain
+@model RequestCardCreationOptionsViewModel
+<h1>Добавление карточки обращения</h1>
+
+<form asp-controller="RequestCard" asp-action="SaveRequestCard" method="post">
+    <div>
+        <label>Инициатор</label>
+        <input asp-for="Initiator"/>
+        <span asp-validation-for="Initiator" class="text-danger"></span>
+    </div>
+    <div>
+        <label>Тема обращения</label>
+        <input asp-for="SubjectOfAppeal" />
+        <span asp-validation-for="SubjectOfAppeal" class="text-danger"></span>
+    </div>
+    <div>
+        <label>Описание</label>
+        <input asp-for="Description" />
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+    <div>
+        <label>Крайний срок взятия в работу</label>
+        <input asp-for="DeadlineForHiring" />
+        <span asp-validation-for="DeadlineForHiring" class="text-danger"></span>
+    </div>
+    <div>
+        <label>Категория</label>
+        @Html.DropDownList("category", Html.GetEnumSelectList(typeof(RequestCategory)))
+        <br />
+        <span asp-validation-for="Category"></span>
+    </div>
+
+    <p>
+        <button type="submit">Сохранить</button>
+    </p>
+</form>

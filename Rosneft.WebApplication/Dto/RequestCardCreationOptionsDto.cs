@@ -14,6 +14,6 @@ namespace Rosneft.WebApplication.Dto
         [JsonProperty("deadlineForHiring")]
         public DateTime DeadlineForHiring { get; set; }
         [JsonProperty("category")]
-        public int? Category { get; set; }
+        public int Category { get; set; }
     }
 }

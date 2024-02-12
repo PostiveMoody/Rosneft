@@ -1,10 +1,18 @@
-﻿namespace Rosneft.Domain
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Rosneft.Domain
 {
     public enum RequestCategory
     {
-        Consultation = 0,
-        Сomplaint = 1,
-        Incident = 2,
-        Other = 3,
+        [Display(Name = "")]
+        None = 0,
+        [Display(Name = "Консультация")]
+        Consultation = 1,
+        [Display(Name = "Жалоба")]
+        Сomplaint = 2,
+        [Display(Name = "Инцидент")]
+        Incident = 3,
+        [Display(Name = "Другое")]
+        Other = 4,
     }
 }
