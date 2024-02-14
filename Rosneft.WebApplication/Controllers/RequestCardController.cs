@@ -1,14 +1,14 @@
 ﻿using Community.OData.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Rosneft.DAL;
 using Rosneft.Domain;
 using Rosneft.WebApplication.Dto;
-using Rosneft.WebApplication.Models;
 using Rosneft.WebApplication.Odata;
 
 namespace Rosneft.WebApplication.Controllers
 {
-    [Route("requestcards")]
+    [Route("[controller]")]
     public class RequestCardController : Controller
     {
         private readonly IUnitOfWork _uow;
@@ -30,29 +30,37 @@ namespace Rosneft.WebApplication.Controllers
         /// <exception cref="ArgumentNullException"></exception>
         [HttpPost]
         [Route("save")]
-        public ApiResult<RequestCardDto> Post([FromBody] RequestCardCreationOptionsDto creationOptions)
+        public async Task<ApiResult<RequestCardDto>> Post([FromBody] RequestCardCreationOptionsDto creationOptions)
         {
             if (creationOptions == null || creationOptions.DeadlineForHiring == default)
                 throw new ArgumentNullException(nameof(creationOptions));
 
             var now = DateTime.Now;
-            
+
             var requestCard = RequestCard.Save(
                now,
                creationOptions.Initiator,
                creationOptions.SubjectOfAppeal,
                creationOptions.Description,
                creationOptions.DeadlineForHiring,
-               (RequestCategory)creationOptions.Category);
+               creationOptions.Category);
 
             _uow.RequestCardRepository.AddToContext(requestCard);
-            _uow.SaveChanges();
+            await _uow.SaveChangesAsync();
 
             return requestCard
                 .ToDto()
                 .ToApiResult();
         }
 
+        /// <summary>
+        /// https://stackoverflow.com/questions/48743165/toarrayasync-throws-the-source-iqueryable-doesnt-implement-iasyncenumerable
+        /// </summary>
+        /// <param name="filter"></param>
+        /// <param name="top"></param>
+        /// <param name="skip"></param>
+        /// <param name="orderby"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("list")]
         public ApiResult<PageDto<RequestCardDto>> Get(string filter
@@ -60,21 +68,21 @@ namespace Rosneft.WebApplication.Controllers
             , string skip
             , string orderby)
         {
-            var qData = _uow.RequestCardRepository.RequestCards()
+             var qData = _uow.RequestCardRepository.RequestCards()
                 .Where(requestCard => requestCard.IsDeleted == false)
                 .Select(requestCard => new RequestCardDto()
-            {
-                RequestCardId = requestCard.RequestCardId,
-                Initiator = requestCard.Initiator,
-                SubjectOfAppeal = requestCard.SubjectOfAppeal,
-                Description = requestCard.Description,
-                DeadlineForHiring = requestCard.DeadlineForHiring,
-                Status = requestCard.Status,
-                Category = requestCard.Category,
-                CreationDate = requestCard.CreationDate,
-                RequestCardVersion = requestCard.RequestCardVersion,
-                IsDeleted = requestCard.IsDeleted
-            }).OData(edmModel: _modelFactory.CreateOrGet());
+                {
+                    RequestCardId = requestCard.RequestCardId,
+                    Initiator = requestCard.Initiator,
+                    SubjectOfAppeal = requestCard.SubjectOfAppeal,
+                    Description = requestCard.Description,
+                    DeadlineForHiring = requestCard.DeadlineForHiring,
+                    Status = requestCard.Status,
+                    Category = requestCard.Category,
+                    CreationDate = requestCard.CreationDate,
+                    RequestCardVersion = requestCard.RequestCardVersion,
+                    IsDeleted = requestCard.IsDeleted
+                }).OData(edmModel: _modelFactory.CreateOrGet());
 
             if (!string.IsNullOrEmpty(filter))
             {
@@ -104,10 +112,10 @@ namespace Rosneft.WebApplication.Controllers
 
         [HttpGet]
         [Route("{requestCardId}")]
-        public ApiResult<RequestCardDto> Get(int requestCardId)
+        public async Task<ApiResult<RequestCardDto>> Get(int requestCardId)
         {
-            var requestCard = _uow.RequestCardRepository.RequestCards()
-                .FirstOrDefault(requestCard => requestCard.RequestCardId == requestCardId);
+            var requestCard = await _uow.RequestCardRepository.RequestCards()
+                .FirstOrDefaultAsync(requestCard => requestCard.RequestCardId == requestCardId);
 
             if (requestCard == null || requestCard.IsDeleted)
             {
@@ -123,11 +131,11 @@ namespace Rosneft.WebApplication.Controllers
 
         [HttpDelete]
         [Route("{requestCardId}")]
-        public ApiResult<RequestCardDto> Delete(int requestCardId,int requestCardVersion)
+        public async Task<ApiResult<RequestCardDto>> Delete(int requestCardId, int requestCardVersion)
         {
-            var requestCard = _uow.RequestCardRepository.RequestCards()
-                .FirstOrDefault(requestCard => requestCard.RequestCardId == requestCardId);
-            
+            var requestCard = await _uow.RequestCardRepository.RequestCards()
+                .FirstOrDefaultAsync(requestCard => requestCard.RequestCardId == requestCardId);
+
             if (requestCard == null || requestCard.IsDeleted)
             {
                 return ApiResult<RequestCardDto>.CreateFailed(
@@ -137,7 +145,7 @@ namespace Rosneft.WebApplication.Controllers
 
             var now = DateTime.Now;
             requestCard.Delete(now, requestCardVersion);
-            _uow.SaveChanges();
+            await _uow.SaveChangesAsync();
 
             return requestCard
                .ToDto()
@@ -146,14 +154,14 @@ namespace Rosneft.WebApplication.Controllers
 
         [HttpPut]
         [Route("{requestCardId}")]
-        public ApiResult<RequestCardDto> Put(int requestCardId,
+        public async Task<ApiResult<RequestCardDto>> Put(int requestCardId,
             [FromBody] RequestCardUpdateOptionsDto options)
         {
             if (options == null || options.DeadlineForHiring == default)
                 throw new ArgumentNullException(nameof(options));
 
-            var requestCard = _uow.RequestCardRepository.RequestCards()
-                .FirstOrDefault(requestCard => requestCard.RequestCardId == requestCardId);
+            var requestCard = await _uow.RequestCardRepository.RequestCards()
+                .FirstOrDefaultAsync(requestCard => requestCard.RequestCardId == requestCardId);
 
             if (requestCard == null || requestCard.IsDeleted)
             {
@@ -165,14 +173,15 @@ namespace Rosneft.WebApplication.Controllers
             var now = DateTime.Now;
 
             requestCard.Update(
-                now, 
+                now,
                 options.Initiator,
                 options.SubjectOfAppeal,
                 options.Description,
                 options.DeadlineForHiring,
                 options.Category,
                 options.RequestCardVersion);
-            _uow.SaveChanges();
+
+            await _uow.SaveChangesAsync();
 
             return requestCard
                .ToDto()
@@ -191,7 +200,7 @@ namespace Rosneft.WebApplication.Controllers
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         [HttpPost]
-        public async Task<IActionResult> SaveRequestCard([FromForm] RequestCardCreationOptionsViewModel creationOptions)
+        public async Task<IActionResult> SaveRequestCard([FromForm] RequestCardCreationOptionsDto creationOptions)
         {
             if (!ModelState.IsValid)
             {

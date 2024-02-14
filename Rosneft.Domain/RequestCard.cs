@@ -88,7 +88,7 @@ namespace Rosneft.Domain
             string subjectOfAppeal,
             string description,
             DateTime deadlineForHiring,
-            int category,
+            RequestCategory category,
             int requestCardVersion)
         {
             if (string.IsNullOrEmpty(initator) &&

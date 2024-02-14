@@ -7,6 +7,8 @@ using Rosneft.WebApplication.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSwaggerGen();
+
 // Add services to the container.
 var conn = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -25,7 +27,7 @@ builder.Services.AddQuartz(quartConfig =>
     quartConfig.AddTrigger(triggerConfig => triggerConfig
     .ForJob(jobKey)
     .WithIdentity(nameof(RequestCardExpiredJob) + "-trigger")
-    .WithCronSchedule("0 0/3 * * * ?"));
+    .WithCronSchedule("0 0 0 * * ?"));
 });
 
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
@@ -33,6 +35,12 @@ builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseStaticFiles();
 
