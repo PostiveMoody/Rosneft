@@ -73,20 +73,27 @@ namespace Rosneft.Domain
             };
         }
 
-        public static RequestCard Save(
-           DateTime now,
-           string initator,
-           string subjectOfAppeal,
-           string description,
-           DateTime deadlineForHiring,
-           int category)
+        public void Delete(DateTime now, int requestCardVersion)
         {
-            if (now == default)
-                throw new DomainException("Invalid DateTime: " + nameof(now));
+            CheckVersion(requestCardVersion);
 
+            this.IsDeleted = true;
+            this.UpdatedDate = now;
+            this.RequestCardVersion += 1;
+        }
+
+        public void Update(
+            DateTime now, 
+            string initator,
+            string subjectOfAppeal,
+            string description,
+            DateTime deadlineForHiring,
+            int category,
+            int requestCardVersion)
+        {
             if (string.IsNullOrEmpty(initator) &&
-                initator.Length > 150 &&
-                initator.Any(char.IsDigit))
+               initator.Length > 150 &&
+               initator.Any(char.IsDigit))
             {
                 throw new DomainException("Invalid string: " +
                    nameof(initator) +
@@ -112,72 +119,23 @@ namespace Rosneft.Domain
                     nameof(deadlineForHiring));
             }
 
-            return new RequestCard
-            {
-                Initiator = initator,
-                SubjectOfAppeal = subjectOfAppeal,
-                Description = description,
-                DeadlineForHiring = deadlineForHiring,
-                Status = RequestProgressStatus.New.ToString(),
-                Category = category.ToString(),
-                CreationDate = now,
-                UpdatedDate = now,
-                RequestCardVersion = 1,
-                IsDeleted = false,
-            };
-        }
-
-        public void Delete(DateTime now, int requestCardVersion)
-        {
             CheckVersion(requestCardVersion);
 
-            this.IsDeleted = true;
+            this.Initiator = initator;
+            this.SubjectOfAppeal = subjectOfAppeal;
+            this.Description = description;
+            this.DeadlineForHiring = deadlineForHiring;
+            this.Category = category.ToString();
             this.UpdatedDate = now;
             this.RequestCardVersion += 1;
         }
 
-        public void Update(DateTime now, RequestCardUpdateOptions updateOptions)
+        public void SetStatusExpired(string status)
         {
-            if(updateOptions == null)
-                throw new DomainException(nameof(updateOptions));
+            if (string.IsNullOrEmpty(status))
+                throw new DomainException(nameof(status) + "is null or empty method: SetStatusExpired");
 
-            if (string.IsNullOrEmpty(updateOptions.Initiator) &&
-               updateOptions.Initiator.Length > 150 &&
-               updateOptions.Initiator.Any(char.IsDigit))
-            {
-                throw new DomainException("Invalid string: " +
-                   nameof(updateOptions.Initiator) +
-                   "The maximum number of characters to enter in the Initiator field is 150 characters.");
-            }
-            if (string.IsNullOrEmpty(updateOptions.SubjectOfAppeal) &&
-               updateOptions.SubjectOfAppeal.Any(char.IsDigit))
-            {
-                throw new DomainException("Invalid string: " +
-                    nameof(updateOptions.SubjectOfAppeal));
-            }
-            if (string.IsNullOrEmpty(updateOptions.Description) &&
-                updateOptions.Description.Length > 1000)
-            {
-                throw new DomainException("Invalid string: " +
-                    nameof(updateOptions.Description) +
-                    "The maximum number of characters to enter in the Description field is 1000 characters.");
-            }
-            if (updateOptions.DeadlineForHiring == default ||
-                updateOptions.DeadlineForHiring < now)
-            {
-                throw new DomainException("Invalid DateTime: " +
-                    nameof(updateOptions.DeadlineForHiring));
-            }
-
-            CheckVersion(updateOptions.RequestCardVersion);
-
-            this.Initiator = updateOptions.Initiator;
-            this.SubjectOfAppeal = updateOptions.SubjectOfAppeal;
-            this.Description = updateOptions.Description;
-            this.DeadlineForHiring = updateOptions.DeadlineForHiring;
-            this.Category = updateOptions.Category.ToString();
-            this.UpdatedDate = now;
-            this.RequestCardVersion += 1;
+            this.Status = status;
         }
 
         private void CheckVersion(int requestCardVersion)

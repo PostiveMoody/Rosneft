@@ -32,10 +32,10 @@ namespace Rosneft.WebApplication.Controllers
         [Route("save")]
         public ApiResult<RequestCardDto> Post([FromBody] RequestCardCreationOptionsDto creationOptions)
         {
-            if (creationOptions == null)
+            if (creationOptions == null || creationOptions.DeadlineForHiring == default)
                 throw new ArgumentNullException(nameof(creationOptions));
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             var requestCard = RequestCard.Save(
                now,
@@ -43,7 +43,7 @@ namespace Rosneft.WebApplication.Controllers
                creationOptions.SubjectOfAppeal,
                creationOptions.Description,
                creationOptions.DeadlineForHiring,
-               creationOptions.Category);
+               (RequestCategory)creationOptions.Category);
 
             _uow.RequestCardRepository.AddToContext(requestCard);
             _uow.SaveChanges();
@@ -135,7 +135,7 @@ namespace Rosneft.WebApplication.Controllers
                     $"RequestCard # {requestCardId} nof found.");
             }
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             requestCard.Delete(now, requestCardVersion);
             _uow.SaveChanges();
 
@@ -146,9 +146,12 @@ namespace Rosneft.WebApplication.Controllers
 
         [HttpPut]
         [Route("{requestCardId}")]
-        public ApiResult<RequestCardDto> Put(int requestCardId, 
-            RequestCardUpdateOptionsDto options)
+        public ApiResult<RequestCardDto> Put(int requestCardId,
+            [FromBody] RequestCardUpdateOptionsDto options)
         {
+            if (options == null || options.DeadlineForHiring == default)
+                throw new ArgumentNullException(nameof(options));
+
             var requestCard = _uow.RequestCardRepository.RequestCards()
                 .FirstOrDefault(requestCard => requestCard.RequestCardId == requestCardId);
 
@@ -159,16 +162,16 @@ namespace Rosneft.WebApplication.Controllers
                     $"RequestCard # {requestCardId} nof found.");
             }
 
-            var requestCardUpdateOptions = new RequestCardUpdateOptions(
-                options.Initiator, 
+            var now = DateTime.Now;
+
+            requestCard.Update(
+                now, 
+                options.Initiator,
                 options.SubjectOfAppeal,
                 options.Description,
                 options.DeadlineForHiring,
                 options.Category,
                 options.RequestCardVersion);
-
-            var now = DateTime.UtcNow;
-            requestCard.Update(now, requestCardUpdateOptions);
             _uow.SaveChanges();
 
             return requestCard
@@ -198,7 +201,7 @@ namespace Rosneft.WebApplication.Controllers
             if (creationOptions == null)
                 throw new ArgumentNullException(nameof(creationOptions));
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
 
             var requestCard = RequestCard.Save(
                 now,
